@@ -25,7 +25,7 @@ This document contains sequence diagrams for the task management API endpoints, 
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: POST /rest/v1/tasks<br/>Authorization: Bearer <jwt_token><br/>Content-Type: multipart/form-data<br/>File: monthly_reports.xlsx
@@ -50,12 +50,44 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     
     FE->>API: POST /rest/v1/tasks<br/>File: document.pdf (wrong format)
     API->>API: Extract user context from JWT
     API->>API: Validate file format - FAILED<br/>(not Excel format)
     API-->>FE: 400 Bad Request<br/>{"error": {"code": "INVALID_FILE_FORMAT", "message": "File must be Excel format (.xlsx or .xls)"}}
+```
+
+### Error Flow - Database Transaction Failure and Rollback
+```mermaid
+sequenceDiagram
+    participant FE as Frontend App
+    participant API as Backend API
+    participant DB as Database
+    
+    FE->>API: POST /rest/v1/tasks<br/>Authorization: Bearer <jwt_token><br/>Content-Type: multipart/form-data<br/>File: monthly_reports.xlsx
+    API->>API: Authenticate and Extract user context from JWT<br/>user_id: "user_123"
+    API->>API: Validate file format and size
+    API->>API: Parse and validate Excel file content
+    API->>API: Split file into individual sheet files as blobs <br/> e.g. 3 sheets: ["January", "February", "March"]
+    
+    API->>DB: BEGIN TRANSACTION
+    API->>API: Generate upload_batch_id
+    
+    API->>DB: INSERT task 1<br/>(user_id: "user_123", sheet_name: "January", task_file_blob, upload_batch_id)
+    DB-->>API: Success - task_id: "task_1"
+    
+    API->>DB: INSERT task 2<br/>(user_id: "user_123", sheet_name: "February", task_file_blob, upload_batch_id)
+    DB-->>API: Success - task_id: "task_2"
+    
+    API->>DB: INSERT task 3<br/>(user_id: "user_123", sheet_name: "March", task_file_blob, upload_batch_id)
+    DB-->>API: ❌ ERROR: Transaction Failure<br/>(e.g., duplicate key, storage limit exceeded, connection timeout)
+    
+    API->>DB: ROLLBACK TRANSACTION
+    DB-->>API: Transaction rolled back successfully<br/>All tasks removed from database
+    
+    API->>API: Clean up temporary file blobs<br/>Release allocated resources
+    API-->>FE: 500 Internal Server Error<br/>{"error": {"code": "DATABASE_ERROR", <br/>"message": "Failed to create tasks due to database error", <br/>"details": "Transaction rolled back"}}
 ```
 
 
@@ -65,7 +97,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: GET /rest/v1/tasks?status=pending&page=1&per_page=20<br/>Authorization: Bearer <jwt_token>
@@ -88,7 +120,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: GET /rest/v1/tasks/123e4567-e89b-12d3-a456-426614174000<br/>Authorization: Bearer <jwt_token>
@@ -106,7 +138,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: GET /rest/v1/tasks/other-user-task<br/>Authorization: Bearer <jwt_token>
@@ -124,7 +156,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: PUT /rest/v1/tasks/123e4567<br/>Authorization: Bearer <jwt_token><br/>Content-Type: application/json<br/>{"action": "cancel"}
@@ -150,7 +182,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: PUT /rest/v1/tasks/completed-task<br/>Authorization: Bearer <jwt_token><br/>{"action": "cancel"}
@@ -169,7 +201,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: DELETE /rest/v1/tasks/123e4567<br/>Authorization: Bearer <jwt_token>
@@ -191,7 +223,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Main API
+    participant API as Backend API
     participant DB as Database
     
     FE->>API: DELETE /rest/v1/tasks/processing-task<br/>Authorization: Bearer <jwt_token>
