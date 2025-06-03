@@ -1,0 +1,657 @@
+openapi: 3.0.0
+info:
+  title: Internal Task Management API
+  version: 1.0.0
+  description: |
+    Internal Task Management API for [Organization Name]
+    
+    This API handles task management through Excel file uploads where each sheet
+    becomes a separate task. Users can upload, query, cancel, and delete tasks.
+    All file processing is handled internally by the main API service.
+    
+    ## Features
+    - Excel file upload with multi-sheet support
+    - Task lifecycle management (create, query, update, delete)
+    - User-scoped task access and ownership
+    - Background task processing with status tracking
+    - File blob storage and retrieval
+    - Self-contained service without external dependencies
+    
+    ## Authentication
+    All endpoints require a valid JWT token obtained from our internal authentication service.
+    Include the token in the Authorization header: `Bearer <jwt_token>`
+    
+    ## Task Processing Flow
+    1. User uploads Excel file via `/rest/v1/tasks`
+    2. File is parsed into individual sheets
+    3. Each sheet becomes a separate task with stored file blob
+    4. Tasks are processed in background
+    5. Users can monitor, update, or delete their tasks
+  contact:
+    name: Internal Task Management Team
+    email: task-api-team@organization.com
+  license:
+    name: Internal Use Only
+    url: https://internal.organization.com/licenses
+
+servers:
+  - url: https://uat-api.organization.com/rest/v1
+    description: uat internal server
+  - url: https://internal-api.organization.com/rest/v1
+    description: Production internal server
+
+components:
+  securitySchemes:
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token from internal authentication service.
+        Token should contain user_id, roles, and permissions.
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - timestamp
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Invalid Excel file format"
+            details:
+              type: string
+              example: "File must be .xlsx or .xls format"
+            timestamp:
+              type: string
+              format: date-time
+              example: "2024-01-01T00:00:00Z"
+            trace_id:
+              type: string
+              example: "request_12345"
+              description: "Request ID for debugging"
+            user_id:
+              type: string
+              example: "user_123"
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 5
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+
+    UserContext:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: "user_123"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john.doe@organization.com"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["user"]
+        departments:
+          type: array
+          items:
+            type: string
+          example: ["engineering"]
+
+    TaskStatus:
+      type: string
+      enum: [queueing, processing, completed, cancelled, failed]
+      description: |
+        Task status values:
+        - queueing: Task created, waiting for processing
+        - processing: Task is being executed
+        - completed: Task finished successfully
+        - cancelled: Task cancelled by user
+        - failed: Task failed with error
+
+    Task: 
+      type: object
+      required:
+        - id
+        - user_id
+        - original_filename
+        - sheet_name
+        - task_status
+        - upload_batch_id
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        user_id:
+          type: string
+          example: "user_123"
+        original_filename:
+          type: string
+          example: "monthly_reports.xlsx"
+        sheet_name:
+          type: string
+          example: "January_Data"
+        task_file_size:
+          type: integer
+          format: int64
+          example: 1048576
+          description: "Task file size in bytes"
+        results_file_size:
+          type: integer
+          format: int64
+          nullable: true
+          example: 2097152
+          description: "Results file size in bytes (if available)"
+        file_mime_type:
+          type: string
+          example: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        task_status:
+          $ref: '#/components/schemas/TaskStatus'
+        upload_batch_id:
+          type: string
+          format: uuid
+          example: "456e7890-e89b-12d3-a456-426614174000"
+          description: "Groups tasks from the same Excel file upload"
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 75
+        error_message:
+          type: string
+          nullable: true
+          example: "Invalid data format in row 15"
+        metadata:
+          type: object
+          nullable: true
+          example: {"row_count": 150, "column_count": 12}
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:05:00Z"
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-01T00:01:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-01T00:10:00Z"
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TaskList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    UploadResponse:
+      type: object
+      required:
+        - upload_batch_id
+        - tasks
+      properties:
+        upload_batch_id:
+          type: string
+          format: uuid
+          example: "456e7890-e89b-12d3-a456-426614174000"
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              task_id:
+                type: string
+                format: uuid
+              sheet_name:
+                type: string
+              status:
+                $ref: '#/components/schemas/TaskStatus'
+        total_sheets:
+          type: integer
+          example: 3
+        message:
+          type: string
+          example: "Successfully created 3 tasks from uploaded Excel file"
+
+    TaskStats:
+      type: object
+      properties:
+        total_tasks:
+          type: integer
+          example: 25
+        pending_tasks:
+          type: integer
+          example: 5
+        processing_tasks:
+          type: integer
+          example: 3
+        completed_tasks:
+          type: integer
+          example: 15
+        cancelled_tasks:
+          type: integer
+          example: 1
+        failed_tasks:
+          type: integer
+          example: 1
+        total_upload_batches:
+          type: integer
+          example: 8
+
+    TaskWithBlobs:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            task_file_blob:
+              type: string
+              format: byte
+              description: "Base64 encoded task file blob data"
+            results_file_blob:
+              type: string
+              format: byte
+              nullable: true
+              description: "Base64 encoded results file blob data (if available)"
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalid_file:
+              summary: Invalid Excel file
+              value:
+                error:
+                  code: "INVALID_FILE_FORMAT"
+                  message: "File must be Excel format (.xlsx or .xls)"
+                  details: "Uploaded file has MIME type text/plain"
+                  timestamp: "2024-01-01T00:00:00Z"
+                  trace_id: "request_12345"
+                  user_id: "user_123"
+    
+    Unauthorized:
+      description: Unauthorized - Invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "UNAUTHORIZED"
+              message: "Invalid or expired JWT token"
+              details: "Please refresh your authentication token"
+              timestamp: "2024-01-01T00:00:00Z"
+              trace_id: "request_12345"
+    
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "FORBIDDEN"
+              message: "Access denied to task"
+              details: "You can only access your own tasks"
+              timestamp: "2024-01-01T00:00:00Z"
+              trace_id: "request_12345"
+              user_id: "user_123"
+    
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    PayloadTooLarge:
+      description: Payload Too Large
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "FILE_TOO_LARGE"
+              message: "File size exceeds maximum limit"
+              details: "Maximum file size is 50MB"
+              timestamp: "2024-01-01T00:00:00Z"
+              trace_id: "request_12345"
+              user_id: "user_123"
+    
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+security:
+  - JWTAuth: []
+
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check endpoint
+      description: Check if the API and database are healthy
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  database:
+                    type: string
+                    example: "healthy"
+
+  /me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user information
+      description: Retrieve user context from JWT token
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserContext'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks:
+    post:
+      tags:
+        - Tasks
+      summary: Upload Excel file and create tasks
+      description: |
+        Upload an Excel file with multiple sheets. Each sheet will be converted
+        into a separate task. The file is parsed internally by the API service,
+        and individual sheet data is stored as file blobs.
+        
+        **File Requirements:**
+        - Format: .xlsx or .xls
+        - Maximum size: 50MB
+        - Maximum sheets: 20 per file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel file (.xlsx or .xls)
+                description:
+                  type: string
+                  description: Optional description for the upload batch
+                  example: "Monthly sales data upload"
+      responses:
+        '201':
+          description: Excel file uploaded and tasks created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Tasks
+      summary: List user's tasks
+      description: |
+        Retrieve a paginated list of tasks owned by the current user.
+        Results can be filtered by status, upload batch, and other criteria.
+        Note: This endpoint does NOT include file blob data for performance.
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by task status
+          required: false
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+        - name: upload_batch_id
+          in: query
+          description: Filter by upload batch ID
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: filename
+          in: query
+          description: Filter by original filename (partial match)
+          required: false
+          schema:
+            type: string
+        - name: created_after
+          in: query
+          description: Filter tasks created after this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          description: Filter tasks created before this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of user's tasks (without blob data)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Task ID
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags:
+        - Tasks
+      summary: Get task details with file blobs
+      description: |
+        Retrieve detailed information about a specific task including file blob data.
+        Users can only access their own tasks.
+        Note: This endpoint includes both task_file_blob and results_file_blob data.
+      responses:
+        '200':
+          description: Task details with file blob data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskWithBlobs'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update/cancel task
+      description: |
+        Update a task, primarily used for cancelling tasks. Only tasks in 'pending' or 'processing'
+        status can be cancelled. Only task owners can update their tasks.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [cancel]
+                  description: Action to perform on the task
+                  example: "cancel"
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Cannot update task in current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "INVALID_STATUS"
+                  message: "Cannot cancel completed task"
+                  details: "Task has already finished processing"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete task
+      description: |
+        Delete a task permanently. This will remove the task record and 
+        associated file blob. Only task owners can delete their tasks.
+        Tasks in 'processing' status cannot be deleted.
+      responses:
+        '204':
+          description: Task deleted successfully
+        '400':
+          description: Cannot delete task in current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "INVALID_STATUS"
+                  message: "Cannot delete task in processing status"
+                  details: "Cancel the task first, then delete it"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError' 

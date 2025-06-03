@@ -1,0 +1,299 @@
+<!DOCTYPE html><html><head>
+      <title>sequence-diagrams-api-handling</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:////Users/hzy/.cursor/extensions/shd101wyy.markdown-preview-enhanced-0.8.18/crossnote/dependencies/katex/katex.min.css">
+      
+      
+      <script type="text/javascript" src="file:////Users/hzy/.cursor/extensions/shd101wyy.markdown-preview-enhanced-0.8.18/crossnote/dependencies/mermaid/mermaid.min.js" charset="UTF-8"></script>
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. --><script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script></head><body for="html-export">
+    
+    
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="task-management-api-request-handling-sequence-diagrams">Task Management API Request Handling Sequence Diagrams </h1>
+<p>This document contains sequence diagrams for the task management API endpoints, showing the interaction flow between frontend applications, API service, and database with simplified internal processing.</p>
+<h2 id="participants-legend">Participants Legend </h2>
+<ul>
+<li><strong>Frontend</strong>: Internal frontend applications (Task Management UI)</li>
+<li><strong>API</strong>: Main task management API service (handles all processing internally)</li>
+<li><strong>DB</strong>: Primary Database (tasks and files)</li>
+</ul>
+<h2 id="endpoints">Endpoints </h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+<th>Auth Level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/rest/v1/tasks</code></td>
+<td>Upload Excel file and create tasks</td>
+<td>User</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/rest/v1/tasks</code></td>
+<td>List user's tasks with filtering (no blob data)</td>
+<td>User</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/rest/v1/tasks/{id}</code></td>
+<td>Get specific task details with blob files</td>
+<td>User</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/rest/v1/tasks/{id}</code></td>
+<td>Update/cancel a task</td>
+<td>Owner</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/rest/v1/tasks/{id}</code></td>
+<td>Delete a task</td>
+<td>Owner</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-post-restv1tasks---excel-file-upload-and-task-creation">1. POST /rest/v1/tasks - Excel File Upload and Task Creation </h2>
+<h3 id="success-flow---multi-sheet-excel-upload">Success Flow - Multi-Sheet Excel Upload </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: POST /rest/v1/tasks&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;&lt;br/&gt;Content-Type: multipart/form-data&lt;br/&gt;File: monthly_reports.xlsx
+    API-&gt;&gt;API: Extract user context from JWT&lt;br/&gt;user_id: "user_123"
+    API-&gt;&gt;API: Validate file format and size
+    API-&gt;&gt;API: Parse Excel file internally&lt;br/&gt;Extract sheets: ["January", "February", "March"]
+    API-&gt;&gt;API: Create individual sheet files as blobs
+    
+    API-&gt;&gt;DB: BEGIN TRANSACTION
+    API-&gt;&gt;API: Generate upload_batch_id
+    
+    loop For each sheet (3 sheets)
+        API-&gt;&gt;DB: INSERT task&lt;br/&gt;(user_id: "user_123", sheet_name, task_file_blob, upload_batch_id, status: "pending")
+        DB--&gt;&gt;API: Return task_id
+    end
+    
+    API-&gt;&gt;DB: COMMIT TRANSACTION
+    API--&gt;&gt;FE: 201 Created&lt;br/&gt;{upload_batch_id, tasks: [3 tasks], total_sheets: 3}
+</div><h3 id="error-flow---invalid-excel-file">Error Flow - Invalid Excel File </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    
+    FE-&gt;&gt;API: POST /rest/v1/tasks&lt;br/&gt;File: document.pdf (wrong format)
+    API-&gt;&gt;API: Extract user context from JWT
+    API-&gt;&gt;API: Validate file format - FAILED&lt;br/&gt;(not Excel format)
+    API--&gt;&gt;FE: 400 Bad Request&lt;br/&gt;{"error": {"code": "INVALID_FILE_FORMAT", "message": "File must be Excel format (.xlsx or .xls)"}}
+</div><h2 id="2-get-restv1tasks---list-user-tasks-no-blob-data">2. GET /rest/v1/tasks - List User Tasks (No Blob Data) </h2>
+<h3 id="success-flow-with-filtering">Success Flow with Filtering </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: GET /rest/v1/tasks?status=pending&amp;page=1&amp;per_page=20&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;
+    API-&gt;&gt;API: Extract user context from JWT&lt;br/&gt;user_id: "user_123"
+    API-&gt;&gt;API: Parse query parameters and build filters
+    
+    API-&gt;&gt;DB: SELECT id, user_id, original_filename, sheet_name, task_file_size, results_file_size, task_status, progress_percentage, created_at, updated_at&lt;br/&gt;FROM tasks WHERE user_id = 'user_123' AND status = 'pending'&lt;br/&gt;ORDER BY created_at DESC LIMIT 20 OFFSET 0&lt;br/&gt;(excludes blob columns for performance)
+    DB--&gt;&gt;API: Return task list (5 pending tasks without blob data)
+    
+    API-&gt;&gt;DB: SELECT COUNT(*)&lt;br/&gt;WHERE user_id = 'user_123' AND status = 'pending'
+    DB--&gt;&gt;API: Return total count (25)
+    
+    API-&gt;&gt;API: Build paginated response
+    API--&gt;&gt;FE: 200 OK&lt;br/&gt;{data: [5 tasks], meta: {page: 1, total: 25, has_next: true}}
+</div><h2 id="3-get-restv1tasksid---get-task-details-with-blob-data">3. GET /rest/v1/tasks/{id} - Get Task Details with Blob Data </h2>
+<h3 id="success-flow">Success Flow </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: GET /rest/v1/tasks/123e4567-e89b-12d3-a456-426614174000&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;
+    API-&gt;&gt;API: Extract user context from JWT&lt;br/&gt;user_id: "user_123", task_id: "123e4567"
+    API-&gt;&gt;API: Validate task ID format
+    
+    API-&gt;&gt;DB: SELECT * FROM tasks&lt;br/&gt;WHERE id = '123e4567' AND user_id = 'user_123'&lt;br/&gt;(includes task_file_blob and results_file_blob)
+    DB--&gt;&gt;API: Return complete task details&lt;br/&gt;{id, sheet_name: "January", status: "processing", progress: 75%, task_file_blob, results_file_blob, metadata}
+    
+    API-&gt;&gt;API: Encode blob data as base64 for JSON response
+    API--&gt;&gt;FE: 200 OK&lt;br/&gt;{task details with all metadata and blob data}
+</div><h3 id="error-flow---task-not-found-or-access-denied">Error Flow - Task Not Found or Access Denied </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: GET /rest/v1/tasks/other-user-task&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;
+    API-&gt;&gt;API: Extract user context from JWT&lt;br/&gt;user_id: "user_123"
+    
+    API-&gt;&gt;DB: SELECT * FROM tasks&lt;br/&gt;WHERE id = 'other-user-task' AND user_id = 'user_123'
+    DB--&gt;&gt;API: No results (task not found or belongs to another user)
+    
+    API--&gt;&gt;FE: 404 Not Found&lt;br/&gt;{"error": {"code": "TASK_NOT_FOUND", "message": "Task not found"}}
+</div><h2 id="4-put-restv1tasksid---updatecancel-task">4. PUT /rest/v1/tasks/{id} - Update/Cancel Task </h2>
+<h3 id="success-flow---cancel-task">Success Flow - Cancel Task </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: PUT /rest/v1/tasks/123e4567&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;&lt;br/&gt;Content-Type: application/json&lt;br/&gt;{"action": "cancel"}
+    API-&gt;&gt;API: Extract user context from JWT&lt;br/&gt;user_id: "user_123", task_id: "123e4567"
+    API-&gt;&gt;API: Parse request body and validate action
+    
+    API-&gt;&gt;DB: SELECT task&lt;br/&gt;WHERE id = '123e4567' AND user_id = 'user_123' FOR UPDATE
+    DB--&gt;&gt;API: Return task&lt;br/&gt;{id, status: "processing", user_id: "user_123"}
+    
+    API-&gt;&gt;API: Check if task can be cancelled&lt;br/&gt;(status = "pending" or "processing")
+    API-&gt;&gt;API: Stop internal task processing&lt;br/&gt;Clean up background operations
+    
+    API-&gt;&gt;DB: UPDATE task&lt;br/&gt;SET status = 'cancelled', cancelled_at = NOW(), updated_at = NOW()&lt;br/&gt;WHERE id = '123e4567'
+    DB--&gt;&gt;API: Update successful
+    
+    API-&gt;&gt;DB: SELECT updated task (without blobs for response)
+    DB--&gt;&gt;API: Return updated task with status "cancelled"
+    
+    API--&gt;&gt;FE: 200 OK&lt;br/&gt;{updated task with status "cancelled"}
+</div><h3 id="error-flow---cannot-cancel-completed-task">Error Flow - Cannot Cancel Completed Task </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: PUT /rest/v1/tasks/completed-task&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;&lt;br/&gt;{"action": "cancel"}
+    API-&gt;&gt;API: Extract user context from JWT
+    
+    API-&gt;&gt;DB: SELECT task&lt;br/&gt;WHERE id = 'completed-task' AND user_id = 'user_123'
+    DB--&gt;&gt;API: Return task&lt;br/&gt;{status: "completed"}
+    
+    API-&gt;&gt;API: Check cancellation eligibility&lt;br/&gt;Cannot cancel completed task
+    API--&gt;&gt;FE: 400 Bad Request&lt;br/&gt;{"error": {"code": "INVALID_STATUS", "message": "Cannot cancel completed task"}}
+</div><h2 id="5-delete-restv1tasksid---delete-task">5. DELETE /rest/v1/tasks/{id} - Delete Task </h2>
+<h3 id="success-flow-1">Success Flow </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: DELETE /rest/v1/tasks/123e4567&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;
+    API-&gt;&gt;API: Extract user context from JWT&lt;br/&gt;user_id: "user_123", task_id: "123e4567"
+    
+    API-&gt;&gt;DB: SELECT task&lt;br/&gt;WHERE id = '123e4567' AND user_id = 'user_123' FOR UPDATE
+    DB--&gt;&gt;API: Return task&lt;br/&gt;{status: "cancelled", user_id: "user_123", task_file_blob, results_file_blob}
+    
+    API-&gt;&gt;API: Check if task can be deleted&lt;br/&gt;(status != "processing")
+    API-&gt;&gt;API: Clean up file blobs and internal references
+    
+    API-&gt;&gt;DB: DELETE FROM tasks&lt;br/&gt;WHERE id = '123e4567'
+    DB--&gt;&gt;API: Delete successful
+    
+    API--&gt;&gt;FE: 204 No Content
+</div><h3 id="error-flow---cannot-delete-processing-task">Error Flow - Cannot Delete Processing Task </h3>
+<div class="mermaid">sequenceDiagram
+    participant FE as Frontend App
+    participant API as Main API
+    participant DB as Database
+    
+    FE-&gt;&gt;API: DELETE /rest/v1/tasks/processing-task&lt;br/&gt;Authorization: Bearer &lt;jwt_token&gt;
+    API-&gt;&gt;API: Extract user context from JWT
+    
+    API-&gt;&gt;DB: SELECT task&lt;br/&gt;WHERE id = 'processing-task' AND user_id = 'user_123'
+    DB--&gt;&gt;API: Return task&lt;br/&gt;{status: "processing"}
+    
+    API-&gt;&gt;API: Check deletion eligibility&lt;br/&gt;Cannot delete processing task
+    API--&gt;&gt;FE: 400 Bad Request&lt;br/&gt;{"error": {"code": "INVALID_STATUS", "message": "Cannot delete task in processing status"}}
+</div><h2 id="requestresponse-flow-summary">Request/Response Flow Summary </h2>
+<h3 id="key-features-demonstrated">Key Features Demonstrated </h3>
+<ul>
+<li><strong>RESTful Endpoints</strong>: All endpoints follow <code>/rest/v1/</code> pattern with proper HTTP methods</li>
+<li><strong>JWT Authentication</strong>: User context extraction and validation on every request</li>
+<li><strong>User Ownership</strong>: Tasks are scoped to the authenticated user</li>
+<li><strong>Internal Processing</strong>: All file parsing and task processing handled within the main API</li>
+<li><strong>Performance Optimization</strong>: List endpoint excludes blob data, detail endpoint includes blobs</li>
+<li><strong>Error Handling</strong>: Comprehensive error responses with proper HTTP status codes</li>
+<li><strong>Database Transactions</strong>: Atomic operations for data consistency</li>
+<li><strong>File Management</strong>: Blob storage and retrieval handled internally with separate fields for task and results</li>
+</ul>
+<h3 id="performance-characteristics">Performance Characteristics </h3>
+<ul>
+<li><strong>Optimized Listing</strong>: GET /tasks excludes blob data for fast pagination</li>
+<li><strong>Complete Details</strong>: GET /tasks/{id} includes all blob data for full task information</li>
+<li><strong>Simplified Architecture</strong>: No external service dependencies</li>
+<li><strong>Direct Database Access</strong>: Minimal latency for data operations</li>
+<li><strong>Internal File Processing</strong>: No network overhead for file operations</li>
+<li><strong>Background Processing</strong>: Non-blocking task execution with results storage</li>
+<li><strong>Efficient Querying</strong>: Optimized database queries with proper indexing</li>
+</ul>
+
+      </div>
+      
+      
+    
+    
+    <script type="module">
+// TODO: If ZenUML gets integrated into mermaid in the future,
+//      we can remove the following lines.
+
+
+var MERMAID_CONFIG = ({"startOnLoad":false});
+if (typeof MERMAID_CONFIG !== 'undefined') {
+  MERMAID_CONFIG.startOnLoad = false
+  MERMAID_CONFIG.cloneCssStyles = false
+  MERMAID_CONFIG.theme = "default"
+}
+
+mermaid.initialize(MERMAID_CONFIG || {})
+if (typeof(window['Reveal']) !== 'undefined') {
+  function mermaidRevealHelper(event) {
+    var currentSlide = event.currentSlide
+    var diagrams = currentSlide.querySelectorAll('.mermaid')
+    for (var i = 0; i < diagrams.length; i++) {
+      var diagram = diagrams[i]
+      if (!diagram.hasAttribute('data-processed')) {
+        mermaid.init(null, diagram, ()=> {
+          Reveal.slide(event.indexh, event.indexv)
+        })
+      }
+    }
+  }
+  Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+  Reveal.addEventListener('ready', mermaidRevealHelper)
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+} else {
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+}
+</script>
+    
+    
+    
+  
+    </body></html>
