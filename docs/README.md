@@ -25,24 +25,24 @@ This is an internal API service designed for task management within our organiza
 graph TB
     %% User Interface Layer
     FE[Frontend Applications<br/>Task Management UI]
-    SSO[SSO Server<br/>Single Sign-On & JWT Validation]
+    SSO[SSO Server<br/>JWT Validation]
     
     %% Core Services
-    API[Backend API Service<br/>RESTful Endpoints & Business Logic]
-    BGP[Background Processing Engine<br/>Queue Management & Task Handlers]
+    API[Backend API Service<br/>RESTful Endpoints]
+    BGP[Background Processing<br/>Task Handlers]
     
     %% External Services
     subgraph "External Services"
-        Glean[Glean Platform Services<br/>Chat API & Search API]
-        LLM[LLM Similarity Service]
+        Glean[Glean Platform<br/>Chat & Search APIs]
+        LLM[LLM Similarity<br/>Service]
     end
     
     %% Data Layer
-    DB[(MariaDB Database<br/>Tasks & Processing Data)]
+    DB[(MariaDB Database<br/>Tasks & Data)]
     
     %% High-level connections (simplified)
     FE --> API
-    FE -.-> SSO
+    FE --> SSO
     API -.-> SSO
     API --> DB
     BGP --> DB
@@ -69,10 +69,10 @@ graph TB
 - **SSO Server**:
   - Single Sign-On authentication
   - JWT token issuance and validation
-  - Public key/certificate management
+  - Public key/certificate distribution via JWKS endpoint
 - **Backend API Service**: 
   - RESTful API endpoints
-  - JWT token validation and user context extraction
+  - Local JWT token validation using SSO public keys
   - Excel file upload and processing (parsing, sheet extraction)
   - Task lifecycle management (CRUD operations)
   - File blob storage and retrieval
@@ -99,16 +99,16 @@ graph TB
 flowchart TD
     %% User Interface Layer
     UI[Frontend Applications<br/>Task Management UI]
-    Auth[SSO Server<br/>Single Sign-On & JWT Validation]
+    Auth[SSO Server<br/>JWT Validation]
     
     %% Backend API Service
-    API[Backend API Service<br/>Core Business Logic]
+    API[Backend API Service<br/>Core Logic]
     
     %% Task Management Components
-    subgraph "Task Submission & Management"
-        FileParser[Excel File Parser<br/>Multi-sheet Processing]
-        TaskManager[Task Manager<br/>CRUD Operations & Status]
-        QueryHandler[Query Handler<br/>List & Filter Tasks]
+    subgraph "Task Management"
+        FileParser[Excel Parser<br/>Multi-sheet Processing]
+        TaskManager[Task Manager<br/>CRUD Operations]
+        QueryHandler[Query Handler<br/>List & Filter]
     end
     
     %% Database Layer - Management Focus
@@ -116,16 +116,16 @@ flowchart TD
         MainDB[(Main Database<br/>MariaDB)]
         
         subgraph "Core Tables"
-            TasksTable[tasks<br/>Main task metadata & blobs]
+            TasksTable[tasks<br/>Metadata & Blobs]
         end
     end
     
     %% User Flow
-    UI -.->|SSO Authentication| Auth
+    UI -->|SSO Authentication| Auth
     UI -->|JWT + Excel Files| API
     
     %% API Processing Flow
-    API -->|Validate JWT with SSO| Auth
+    API -.->|Get Public Keys/Certs| Auth
     API -->|Parse Excel File| FileParser
     API -->|Task Management| TaskManager
     API -->|Query Operations| QueryHandler
@@ -156,16 +156,16 @@ flowchart TD
 ```mermaid
 flowchart TD
     %% Background Processing Components
-    subgraph "Background Processing Engine"
-        TaskProcessor[Background Task Processor<br/>FIFO Queue Management]
+    subgraph "Background Processing"
+        TaskProcessor[Task Processor<br/>FIFO Queue]
         
-        subgraph "Task Type Handlers"
+        subgraph "Type Handlers"
             ChatEvalHandler[Chat Evaluation<br/>Handler]
             URLCleanHandler[URL Cleaning<br/>Handler]
         end
         
-        subgraph "External Service Clients"
-            GleanServices[Glean Platform Services<br/>Chat API & Search API]
+        subgraph "External Clients"
+            GleanServices[Glean Platform<br/>Chat & Search APIs]
             LLMService[LLM Similarity<br/>Service Client]
         end
     end
@@ -175,11 +175,11 @@ flowchart TD
         MainDB[(Main Database<br/>MariaDB)]
         
         subgraph "Processing Tables"
-            TasksTable[tasks<br/>Status & Progress Updates]
-            ChatInputTable[chat_evaluation_input<br/>Questions & golden answers]
-            ChatOutputTable[chat_evaluation_output<br/>API responses & scores]
+            TasksTable[tasks<br/>Status & Progress]
+            ChatInputTable[chat_evaluation_input<br/>Questions & Answers]
+            ChatOutputTable[chat_evaluation_output<br/>API Responses]
             URLInputTable[url_cleaning_input<br/>Original URLs]
-            URLOutputTable[url_cleaning_output<br/>Cleaned URLs & status]
+            URLOutputTable[url_cleaning_output<br/>Cleaned URLs]
         end
     end
     
@@ -246,9 +246,11 @@ flowchart TD
 ## Authentication & Authorization
 
 ### JWT Token Flow
-- Frontend applications obtain JWT tokens from our internal authentication service
+- Frontend applications obtain JWT tokens from our internal SSO server
 - Each API request includes JWT token in Authorization header: `Bearer <token>`
-- API validates JWT signature and extracts user context (user_id, roles, permissions)
+- **Key Distribution**: Backend API Service obtains public keys from SSO server at startup and periodically refreshes them
+- **Token Validation**: API validates JWT signature locally using SSO public keys (no SSO server call per request)
+- **User Context**: API extracts user context (user_id, roles, permissions) from validated JWT claims
 - User context is used for task ownership and access control
 
 ## API Endpoints Design

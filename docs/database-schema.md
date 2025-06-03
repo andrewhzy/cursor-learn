@@ -190,5 +190,13 @@ WHERE task_id IN (
 - **direct_search**: Found via direct URL search
 - **title_search**: Found via extracted title search  
 - **both_failed**: Neither search method worked
-- **api_unavailable**: Glean API was down
+- **api_unavailable**: Glean Platform Services was down
 - **url_parse_error**: Could not parse URL structure 
+
+### URL Cleaning Status Values
+- **success**: URL was successfully cleaned through search
+- **failed**: Both direct and title-based searches failed
+- **url_parse_error**: Original URL could not be parsed or validated
+- **api_error**: Glean Platform Services was unavailable during processing
+- **timeout_error**: Search request timed out
+- **api_unavailable**: Glean Platform Services was down 

@@ -1,111 +1,103 @@
-# Background Task Processing - Chat Evaluation
+# Chat Evaluation Background Processing Sequence Diagram
 
-## Chat-Evaluation Processing Workflow
+## Chat Evaluation Processing Flow
 
-### Complete Processing Sequence for Chat-Evaluation Task Type
+### Success Flow - Complete Excel Processing
 ```mermaid
 sequenceDiagram
-    participant BG as Background Processor
+    participant BG as Background Task Processor
     participant DB as Database
-    participant Glenn as Glenn Chat API
+    participant Glean as Glean Platform Services
     participant LLM as LLM Similarity Service
     
-    Note over BG: Background Processing Loop
+    BG->>DB: SELECT task FROM tasks<br/>WHERE task_type = 'chat-evaluation' AND status = 'queueing'<br/>ORDER BY created_at ASC LIMIT 1
+    DB-->>BG: Return task_id: "task_123", Excel file blob
     
-    BG->>DB: SELECT * FROM tasks<br/>WHERE status = 'pending' AND task_type = 'chat-evaluation'<br/>ORDER BY created_at LIMIT 1
-    DB-->>BG: Return oldest chat-evaluation task<br/>{task_id, task_file_blob, user_id}
+    BG->>BG: Parse Excel file<br/>Extract 100 rows: questions, golden_answers, golden_citations
+    
+    BG->>DB: BEGIN TRANSACTION
+    
+    loop For each row (100 rows)
+        BG->>DB: INSERT INTO chat_evaluation_input<br/>(task_id, row_number, question, golden_answer, golden_citations)
+        DB-->>BG: Row inserted successfully
+    end
     
     BG->>DB: UPDATE tasks SET status = 'processing', started_at = NOW()<br/>WHERE task_id = 'task_123'
+    BG->>DB: COMMIT TRANSACTION
     
-    Note over BG: Step 1: Parse Excel and Extract Data
-    
-    BG->>BG: Parse task_file_blob (Excel) <br/>Prepare batch data (e.g., 100 rows)
-    
-    BG->>DB: INSERT INTO chat_evaluation_input<br/>(task_id, row_number, question, golden_answer, golden_citations)<br/>VALUES (batch of all 100 rows)
-    
-    Note over BG: Step 2: Process Each Row
-    
-    BG->>DB: SELECT * FROM chat_evaluation_input<br/>WHERE task_id = 'task_123'<br/>ORDER BY row_number
-    DB-->>BG: Return all content rows (100 rows)
-    
-    loop For each content row (1 to 100)
-        Note over BG: Process Row N
+    loop For each row (100 iterations)
+        BG->>DB: SELECT question, golden_answer, golden_citations<br/>FROM chat_evaluation_input WHERE task_id = 'task_123' AND row_number = X
+        DB-->>BG: Return row data
         
-        BG->>Glenn: POST /chat<br/>{"question": "What is AI?"}
-        Glenn-->>BG: {"answer": "AI is...", "citations": ["url1", "url2"]}
+        BG->>Glean: POST /chat<br/>{"question": "What is AI?"}
+        Glean-->>BG: {"answer": "AI is...", "citations": ["url1", "url2"]}
         
-        BG->>LLM: POST /similarity<br/>{"golden_answer": "...", "api_answer": "..."}
-        LLM-->>BG: {"answer_similarity": 0.85}
-
-        BG->>BG: calculate citation url similarity
+        BG->>LLM: POST /similarity<br/>{"text1": "golden_answer", "text2": "api_answer"}
+        LLM-->>BG: {"similarity": 0.85}
+        
+        BG->>LLM: POST /similarity<br/>{"citations1": ["url1"], "citations2": ["url2"]}
+        LLM-->>BG: {"similarity": 0.92}
         
         BG->>DB: INSERT INTO chat_evaluation_output<br/>(task_id, row_number, api_answer, api_citations, answer_similarity, citation_similarity)
+        DB-->>BG: Results stored
+        
+        BG->>DB: UPDATE tasks SET progress_percentage = (row_number / 100 * 100)<br/>WHERE task_id = 'task_123'
+        DB-->>BG: Progress updated
     end
     
-    Note over BG: Step 3: Generate Final Excel Report
-    
-    BG->>DB: SELECT ceo.*, cei.question, cei.golden_answer, cei.golden_citations<br/>FROM chat_evaluation_output ceo<br/>JOIN chat_evaluation_input cei ON ceo.task_id = cei.task_id AND ceo.row_number = cei.row_number<br/>WHERE ceo.task_id = 'task_123'<br/>ORDER BY row_number
-    DB-->>BG: Return complete results with context<br/>(100 rows with all data)
-    
-    BG->>BG: Generate Excel file from results<br/> and Convert Excel to blob data
-    
-    BG->>DB: UPDATE tasks<br/>SET status = 'completed', completed_at = NOW(), results_file_blob = [excel_blob], results_file_size = [size]<br/>WHERE task_id = 'task_123'
-    
-    Note over BG: Processing Complete ✅
+    BG->>BG: Generate Excel results file<br/>Combine input + output data
+    BG->>DB: UPDATE tasks<br/>SET status = 'completed', completed_at = NOW(), results_file_blob = excel_data<br/>WHERE task_id = 'task_123'
+    DB-->>BG: Task completed successfully
 ```
 
-## Error Handling for Chat-Evaluation Processing
-
-### API Failure During Row Processing
+### Error Flow - API Failure During Processing
 ```mermaid
 sequenceDiagram
-    participant BG as Background Processor
+    participant BG as Background Task Processor
     participant DB as Database
-    participant Glenn as Glenn Chat API
+    participant Glean as Glean Platform Services
     participant LLM as LLM Similarity Service
     
-    Note over BG: Processing Row 45 of 100
+    BG->>DB: SELECT task FROM tasks WHERE task_type = 'chat-evaluation'
+    DB-->>BG: Return task_id: "task_123"
     
-    BG->>Glenn: POST /chat<br/>{"question": "Complex question..."}
-    Glenn--xBG: 500 Internal Server Error<br/>API temporarily unavailable
+    BG->>Glean: POST /chat<br/>{"question": "Complex question..."}
+    Glean--xBG: 500 Internal Server Error<br/>API temporarily unavailable
     
-    BG->>BG: Retry with exponential backoff<br/>Attempt 1, 2, 3 (max 3 retries)
+    BG->>BG: Retry after 30 seconds (attempt 2/3)
+    BG->>BG: Retry after 60 seconds (attempt 3/3) - FAILED
     
-    alt Max retries exceeded
-        BG->>DB: UPDATE tasks<br/>SET status = 'failed', error_message = 'Glenn Chat API unavailable after row 45'<br/>WHERE task_id = 'task_123'
-        Note over BG: Mark task as failed
-    else Retry successful
-        Glenn-->>BG: {"answer": "...", "citations": [...]}
-        BG->>LLM: Continue with similarity calculation
-        Note over BG: Continue processing remaining rows
+    BG->>DB: UPDATE tasks<br/>SET status = 'failed', error_message = 'Glean Platform Services API unavailable after row 45'<br/>WHERE task_id = 'task_123'
+    DB-->>BG: Task marked as failed
+    
+    alt API becomes available later
+        Glean-->>BG: {"answer": "...", "citations": [...]}
+        Note over BG: Manual retry would be needed to resume from row 45
     end
 ```
 
-### Excel Parsing Failure
-```mermaid
-sequenceDiagram
-    participant BG as Background Processor
-    participant DB as Database
-    
-    BG->>DB: SELECT task_file_blob FROM tasks WHERE task_id = 'task_123'
-    DB-->>BG: Return Excel blob data
-    
-    BG->>BG: Parse Excel file - FAILED<br/>Corrupted file or invalid format
-    
-    BG->>DB: UPDATE tasks<br/>SET status = 'failed', error_message = 'Unable to parse Excel file: invalid format or corrupted data'<br/>WHERE task_id = 'task_123'
-    
-    Note over BG: Task marked as failed, no further processing
-```
+## Processing Characteristics
 
-## Performance Characteristics
+### Performance Metrics
+- **Processing Rate**: ~10-15 rows per minute (depending on API response times)
+- **Memory Usage**: Processes one row at a time to minimize memory footprint
+- **Error Handling**: 3 retry attempts with exponential backoff
+- **Progress Tracking**: Real-time progress updates per row
+- **Transaction Safety**: Input data inserted in single transaction, results processed individually
 
-### Processing Metrics
-- **Row Processing Rate**: ~5-10 rows per minute (depending on API response times)
-- **API Call Pattern**: 2 external API calls per row (Glenn Chat + LLM Similarity)
-- **Progress Updates**: Every 10 rows processed (to avoid excessive database updates)
-- **Memory Usage**: Processes rows sequentially to avoid loading entire dataset
+### Data Flow Summary
+1. **Task Selection**: FIFO queue processing of chat-evaluation tasks
+2. **Excel Parsing**: Extract questions, golden answers, and citations  
+3. **Bulk Insert**: Store all input data in chat_evaluation_input table
+4. **Row Processing**: Sequential processing with API calls per row
+5. **Results Storage**: Store API responses and similarity scores
+6. **Progress Updates**: Update task progress percentage per row
+7. **Final Assembly**: Generate Excel file with combined input/output data
+8. **Completion**: Update task status and store results blob
 
-### Database Operations
-- **Bulk Insert**: All content rows inserted in single transaction
-- **Sequential Processing**: Results inserted one row at a time
-- **Final Aggregation**: Single query to join content + results for Excel generation
+### Error Recovery
+- **API Failures**: Retry with exponential backoff (30s, 60s, 120s)
+- **Partial Processing**: Resume from last successful row
+- **Data Integrity**: Input data preserved even if processing fails  
+- **Manual Recovery**: Failed tasks can be manually requeued
+- **API Call Pattern**: 2 external API calls per row (Glean Platform Services + LLM Similarity)

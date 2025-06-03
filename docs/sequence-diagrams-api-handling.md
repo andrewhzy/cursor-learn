@@ -1,10 +1,10 @@
 # Task Management API Request Handling Sequence Diagrams
 
-This document contains sequence diagrams for the task management API endpoints, showing the interaction flow between frontend applications, API service, and database with simplified internal processing.
+This document contains sequence diagrams for the task management API endpoints, showing the interaction flow between frontend applications, Backend API Service, and database with simplified internal processing.
 
 ## Participants Legend
 - **Frontend**: Internal frontend applications (Task Management UI)
-- **API**: Main task management API service (handles all processing internally)
+- **API**: Backend API Service (handles all processing internally)
 - **DB**: Primary Database (tasks and files)
 
 
@@ -25,7 +25,7 @@ This document contains sequence diagrams for the task management API endpoints, 
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: POST /rest/v1/tasks<br/>Authorization: Bearer <jwt_token><br/>Content-Type: multipart/form-data<br/>File: monthly_reports.xlsx
@@ -50,7 +50,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     
     FE->>API: POST /rest/v1/tasks<br/>File: document.pdf (wrong format)
     API->>API: Extract user context from JWT
@@ -62,7 +62,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: POST /rest/v1/tasks<br/>Authorization: Bearer <jwt_token><br/>Content-Type: multipart/form-data<br/>File: monthly_reports.xlsx
@@ -97,7 +97,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: GET /rest/v1/tasks?status=pending&page=1&per_page=20<br/>Authorization: Bearer <jwt_token>
@@ -120,7 +120,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: GET /rest/v1/tasks/123e4567-e89b-12d3-a456-426614174000<br/>Authorization: Bearer <jwt_token>
@@ -138,7 +138,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: GET /rest/v1/tasks/other-user-task<br/>Authorization: Bearer <jwt_token>
@@ -156,7 +156,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: PUT /rest/v1/tasks/123e4567<br/>Authorization: Bearer <jwt_token><br/>Content-Type: application/json<br/>{"action": "cancel"}
@@ -182,7 +182,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: PUT /rest/v1/tasks/completed-task<br/>Authorization: Bearer <jwt_token><br/>{"action": "cancel"}
@@ -201,7 +201,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: DELETE /rest/v1/tasks/123e4567<br/>Authorization: Bearer <jwt_token>
@@ -223,7 +223,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant FE as Frontend App
-    participant API as Backend API
+    participant API as Backend API Service
     participant DB as Database
     
     FE->>API: DELETE /rest/v1/tasks/processing-task<br/>Authorization: Bearer <jwt_token>
@@ -242,7 +242,7 @@ sequenceDiagram
 - **RESTful Endpoints**: All endpoints follow `/rest/v1/` pattern with proper HTTP methods
 - **JWT Authentication**: User context extraction and validation on every request
 - **User Ownership**: Tasks are scoped to the authenticated user
-- **Internal Processing**: All file parsing and task processing handled within the main API
+- **Internal Processing**: All file parsing and task processing handled within the Backend API Service
 - **Performance Optimization**: List endpoint excludes blob data, detail endpoint includes blobs
 - **Error Handling**: Comprehensive error responses with proper HTTP status codes
 - **Database Transactions**: Atomic operations for data consistency

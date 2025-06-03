@@ -1,44 +1,34 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Internal Task Management API
-  version: 1.0.0
   description: |
-    Internal Task Management API for [Organization Name]
+    Internal Task Management API for organizational use with Excel file processing.
     
-    This API handles task management through Excel file uploads where each sheet
-    becomes a separate task. Users can upload, query, cancel, and delete tasks.
-    All file processing is handled internally by the main API service.
+    This API allows users to upload Excel files where each sheet becomes a separate task.
+    All file processing is handled internally by the Backend API Service.
     
-    ## Features
-    - Excel file upload with multi-sheet support
-    - Task lifecycle management (create, query, update, delete)
-    - User-scoped task access and ownership
-    - Background task processing with status tracking
-    - File blob storage and retrieval
-    - Self-contained service without external dependencies
+    **Core Features:**
+    - Upload Excel files with multi-sheet support
+    - Task lifecycle management (create, query, cancel, delete)
+    - Background processing with progress tracking
+    - Internal file processing without external dependencies
     
-    ## Authentication
-    All endpoints require a valid JWT token obtained from our internal authentication service.
-    Include the token in the Authorization header: `Bearer <jwt_token>`
-    
-    ## Task Processing Flow
-    1. User uploads Excel file via `/rest/v1/tasks`
-    2. File is parsed into individual sheets
-    3. Each sheet becomes a separate task with stored file blob
-    4. Tasks are processed in background
-    5. Users can monitor, update, or delete their tasks
+    **Authentication:**
+    - JWT-based authentication from internal SSO
+    - User-scoped access to tasks and operations
+  version: 1.0.0
   contact:
-    name: Internal Task Management Team
-    email: task-api-team@organization.com
+    name: Internal API Team
+    email: api-team@organization.com
   license:
     name: Internal Use Only
     url: https://internal.organization.com/licenses
 
 servers:
-  - url: https://uat-api.organization.com/rest/v1
-    description: uat internal server
   - url: https://internal-api.organization.com/rest/v1
-    description: Production internal server
+    description: Internal Production API Server
+  - url: https://staging-api.organization.com/rest/v1
+    description: Internal Staging API Server
 
 components:
   securitySchemes:
@@ -475,11 +465,16 @@ paths:
     get:
       tags:
         - Tasks
-      summary: List user's tasks
+      summary: List user tasks
       description: |
-        Retrieve a paginated list of tasks owned by the current user.
-        Results can be filtered by status, upload batch, and other criteria.
-        Note: This endpoint does NOT include file blob data for performance.
+        Get a paginated list of tasks for the authenticated user.
+        
+        **Important:** This endpoint excludes blob data (`task_file_blob`, `results_file_blob`) 
+        for performance reasons. Use the individual task endpoint to get blob data.
+        
+        The file is parsed internally by the Backend API Service,
+        creating one task per Excel sheet.
+      operationId: listTasks
       parameters:
         - name: page
           in: query
