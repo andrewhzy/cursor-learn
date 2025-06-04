@@ -371,50 +371,6 @@ security:
   - JWTAuth: []
 
 paths:
-  /health:
-    get:
-      tags:
-        - System
-      summary: Health check endpoint
-      description: Check if the API and database are healthy
-      security: []
-      responses:
-        '200':
-          description: API is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "healthy"
-                  timestamp:
-                    type: string
-                    format: date-time
-                  version:
-                    type: string
-                    example: "1.0.0"
-                  database:
-                    type: string
-                    example: "healthy"
-
-  /me:
-    get:
-      tags:
-        - Authentication
-      summary: Get current user information
-      description: Retrieve user context from JWT token
-      responses:
-        '200':
-          description: Current user information
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserContext'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /tasks:
     post:
       tags:
