@@ -116,8 +116,11 @@ graph TB
 | POST   | `/rest/v1/tasks` | Upload Excel file and create tasks | User |
 | GET    | `/rest/v1/tasks` | List user's tasks with filtering (no blob data) | User |
 | GET    | `/rest/v1/tasks/{id}` | Get specific task details with blob files | User |
-| PUT    | `/rest/v1/tasks/{id}` | Update/cancel a task | Owner |
-| DELETE | `/rest/v1/tasks/{id}` | Delete a task | Owner |
+| PUT    | `/rest/v1/tasks/{id}` | Update/cancel a task | User |
+| DELETE | `/rest/v1/tasks/{id}` | Delete a task | User |
+
+**Note**: All endpoints enforce task ownership at the application level - users can only access, modify, or delete their own tasks.
+
 
 ## System Components and Data Flow
 
