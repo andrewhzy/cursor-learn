@@ -12,9 +12,9 @@ sequenceDiagram
     
     BG->>DB: SELECT task FROM tasks<br/>WHERE task_type = 'chat-evaluation' AND status = 'queueing'<br/>ORDER BY created_at ASC LIMIT 1
     DB-->>BG: Return task_id: "task_123", Excel file blob
-    
-    BG->>BG: Parse Excel file<br/>Extract 100 rows: questions, golden_answers, golden_citations
-    
+
+    BG->>BG: Parse Excel file Extract all rows<br/> (e.g. 100 rows)
+
     BG->>DB: BEGIN TRANSACTION
     
     loop For each row (100 rows)
@@ -35,7 +35,7 @@ sequenceDiagram
         BG->>LLM: POST /similarity<br/>{"text1": "golden_answer", "text2": "api_answer"}
         LLM-->>BG: {"similarity": 0.85}
         
-        BG->>BG: Calculate citation matching rate<br/>{"similarity": 0.92}
+        BG->>BG: Calculate citation matching rate<br/>{"matchingRate": 0.92}
 
         
         BG->>DB: INSERT INTO chat_evaluation_output<br/>(task_id, row_number, api_answer, api_citations, answer_similarity, citation_similarity)
