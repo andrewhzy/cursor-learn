@@ -31,6 +31,9 @@ graph TB
     API[Backend API Service<br/>RESTful Endpoints]
     BGP[Background Processing<br/>Task Handlers]
     
+    %% Observability Layer
+    OTEL[OpenTelemetry<br/>Logging & Tracing]
+    
     %% External Services
     subgraph "External Services"
         Glean[Glean Platform<br/>Chat & Search APIs]
@@ -45,18 +48,22 @@ graph TB
     FE --> SSO
     API -.-> SSO
     API --> DB
+    API --> OTEL
     BGP --> DB
+    BGP --> OTEL
     BGP --> Glean
     BGP --> LLM
     
     %% Styling
     classDef frontend fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
     classDef backend fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef observability fill:#fff3e0,stroke:#ff9800,stroke-width:2px
     classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px
     classDef database fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     
     class FE,SSO frontend
     class API,BGP backend
+    class OTEL observability
     class Glean,LLM external
     class DB database
 ```
@@ -77,11 +84,19 @@ graph TB
   - Task lifecycle management (CRUD operations)
   - File blob storage and retrieval
   - Response formatting and error handling
+  - OpenTelemetry instrumentation for request tracing and metrics
 - **Background Processing Engine**:
   - FIFO queue management
   - Task type routing (Chat Evaluation, URL Cleaning)
   - External service integration
   - Progress tracking and status updates
+  - OpenTelemetry instrumentation for background job tracing
+- **OpenTelemetry (OTEL)**:
+  - Distributed tracing across all service components
+  - Structured logging with correlation IDs
+  - Performance metrics and monitoring
+  - Error tracking and alerting
+  - Observability data export to monitoring systems
 - **External Services**:
   - Glean Platform Services for chat evaluation and URL search
   - LLM Similarity Service for response comparison
@@ -152,17 +167,13 @@ flowchart TD
     class MainDB,TasksTable dbLayer
 ```
 
-### Background Processing Flow Chart
+### Chat Evaluation Background Processing Flow Chart
 ```mermaid
 flowchart TD
     %% Background Processing Components
-    subgraph "Background Processing"
+    subgraph "Chat Evaluation Processing"
         TaskProcessor[Task Processor<br/>FIFO Queue]
-        
-        subgraph "Type Handlers"
-            ChatEvalHandler[Chat Evaluation<br/>Handler]
-            URLCleanHandler[URL Cleaning<br/>Handler]
-        end
+        ChatEvalHandler[Chat Evaluation<br/>Handler]
         
         subgraph "External Clients"
             GleanServices[Glean Platform<br/>Chat & Search APIs]
@@ -170,40 +181,73 @@ flowchart TD
         end
     end
     
-    %% Database Layer - Processing Focus (beneath processing engine)
+    %% Database Layer - Chat Evaluation Focus
     subgraph "Database Layer"
-        MainDB[(Main Database<br/>MariaDB)]
         
-        subgraph "Processing Tables"
+        subgraph "Chat Evaluation Tables"
             TasksTable[tasks<br/>Status & Progress]
             ChatInputTable[chat_evaluation_input<br/>Questions & Answers]
             ChatOutputTable[chat_evaluation_output<br/>API Responses]
-            URLInputTable[url_cleaning_input<br/>Original URLs]
-            URLOutputTable[url_cleaning_output<br/>Cleaned URLs]
         end
     end
     
-    %% Background Processing Flow
+    %% Chat Evaluation Processing Flow
     TasksTable -->|Pick Queued Tasks| TaskProcessor
-    TaskProcessor -->|Route by Type| ChatEvalHandler
-    TaskProcessor -->|Route by Type| URLCleanHandler
+    TaskProcessor -->|Route Chat Tasks| ChatEvalHandler
     
     %% Chat Evaluation Processing Flow
     ChatEvalHandler -->|Parse Excel Data| ChatInputTable
     ChatEvalHandler -->|Chat API Calls| GleanServices
     ChatEvalHandler -->|Similarity Check| LLMService
     ChatEvalHandler -->|Store Results| ChatOutputTable
-    ChatEvalHandler -->|Update Progress| TasksTable
+    
+    %% Data Relationships
+    TasksTable -.->|Foreign Key| ChatInputTable
+    TasksTable -.->|Foreign Key| ChatOutputTable
+    
+    %% Styling
+    classDef processLayer fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef dbLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef externalLayer fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    
+    class TaskProcessor,ChatEvalHandler processLayer
+    class MainDB,TasksTable,ChatInputTable,ChatOutputTable dbLayer
+    class GleanServices,LLMService externalLayer
+```
+
+### URL Cleaning Background Processing Flow Chart
+```mermaid
+flowchart TD
+    %% Background Processing Components
+    subgraph "URL Cleaning Processing"
+        TaskProcessor[Task Processor<br/>FIFO Queue]
+        URLCleanHandler[URL Cleaning<br/>Handler]
+        
+        subgraph "External Clients"
+            GleanServices[Glean Platform<br/>Chat & Search APIs]
+        end
+    end
+    
+    %% Database Layer - URL Cleaning Focus
+    subgraph "Database Layer"
+        
+        subgraph "URL Cleaning Tables"
+            TasksTable[tasks<br/>Status & Progress]
+            URLInputTable[url_cleaning_input<br/>Original URLs]
+            URLOutputTable[url_cleaning_output<br/>Cleaned URLs]
+        end
+    end
+    
+    %% URL Cleaning Processing Flow
+    TasksTable -->|Pick Queued Tasks| TaskProcessor
+    TaskProcessor -->|Route URL Tasks| URLCleanHandler
     
     %% URL Cleaning Processing Flow
     URLCleanHandler -->|Parse URLs| URLInputTable
     URLCleanHandler -->|Search API Calls| GleanServices
     URLCleanHandler -->|Store Results| URLOutputTable
-    URLCleanHandler -->|Update Progress| TasksTable
     
     %% Data Relationships
-    TasksTable -.->|Foreign Key| ChatInputTable
-    TasksTable -.->|Foreign Key| ChatOutputTable
     TasksTable -.->|Foreign Key| URLInputTable
     TasksTable -.->|Foreign Key| URLOutputTable
     
@@ -212,9 +256,9 @@ flowchart TD
     classDef dbLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     classDef externalLayer fill:#fce4ec,stroke:#c2185b,stroke-width:2px
     
-    class TaskProcessor,ChatEvalHandler,URLCleanHandler processLayer
-    class MainDB,TasksTable,ChatInputTable,ChatOutputTable,URLInputTable,URLOutputTable dbLayer
-    class GleanServices,LLMService externalLayer
+    class TaskProcessor,URLCleanHandler processLayer
+    class MainDB,TasksTable,URLInputTable,URLOutputTable dbLayer
+    class GleanServices externalLayer
 ```
 
 ### Component Responsibilities Summary
@@ -223,12 +267,13 @@ flowchart TD
 |-----------|----------------------|---------------|
 | **Frontend Applications** | User interface, file upload, task management | → Backend API Service (via JWT) |
 | **SSO Server** | Single Sign-On authentication, JWT token issuance and validation | → Backend API Service |
-| **Backend API Service** | RESTful endpoints, JWT validation, request/response handling | → Task Management, Database |
+| **Backend API Service** | RESTful endpoints, JWT validation, request/response handling | → Task Management, Database, OTEL |
 | **Excel File Parser** | Multi-sheet parsing, blob creation, data validation | → Task Manager |
 | **Task Manager** | Task CRUD operations, status updates, lifecycle management | → Database |
 | **Query Handler** | Task listing, filtering, search operations | → Database |
-| **Background Task Processor** | FIFO queue management, task type routing | → Task Handlers |
-| **Task Type Handlers** | Business logic for each task type (2 types) | → External APIs, Database |
+| **Background Task Processor** | FIFO queue management, task type routing | → Task Handlers, OTEL |
+| **Task Type Handlers** | Business logic for each task type (2 types) | → External APIs, Database, OTEL |
+| **OpenTelemetry (OTEL)** | Distributed tracing, logging, metrics, and observability | ← All Service Components |
 | **Database Tables** | Data persistence, blob storage, relationships | ← All Components |
 | **External Service Clients** | API integration with Glean Platform Services and LLM Similarity Service | ← Task Handlers |
 
@@ -267,41 +312,22 @@ flowchart TD
 
 ## Database Design
 
-### Task Table Schema
-```sql
-CREATE TABLE tasks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id VARCHAR(255) NOT NULL,
-    original_filename VARCHAR(500) NOT NULL,
-    sheet_name VARCHAR(255) NOT NULL,
-    task_file_blob BYTEA NOT NULL,
-    task_file_size BIGINT NOT NULL,
-    results_file_blob BYTEA,
-    results_file_size BIGINT,
-    file_mime_type VARCHAR(100) DEFAULT 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    task_status VARCHAR(50) NOT NULL DEFAULT 'pending',
-    upload_batch_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    started_at TIMESTAMP WITH TIME ZONE,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    cancelled_at TIMESTAMP WITH TIME ZONE,
-    error_message TEXT,
-    progress_percentage INTEGER DEFAULT 0,
-    metadata JSONB,
-    created_by VARCHAR(255) NOT NULL,
-    
-    CONSTRAINT valid_status CHECK (task_status IN ('pending', 'processing', 'completed', 'cancelled', 'failed')),
-    CONSTRAINT valid_progress CHECK (progress_percentage >= 0 AND progress_percentage <= 100)
-);
+### Database Tables Overview
 
--- Indexes for performance
-CREATE INDEX idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX idx_tasks_status ON tasks(task_status);
-CREATE INDEX idx_tasks_upload_batch ON tasks(upload_batch_id);
-CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);
-CREATE INDEX idx_tasks_user_status ON tasks(user_id, task_status);
-```
+The system uses the following database tables:
+
+| Table Name | Purpose | Type |
+|------------|---------|------|
+| **tasks** | Main task metadata, file blobs, and status tracking | Core |
+| **chat_evaluation_input** | Questions, golden answers, and citations for chat evaluation | Processing |
+| **chat_evaluation_output** | API responses and similarity scores for chat evaluation | Processing |
+| **url_cleaning_input** | Original URLs to be cleaned | Processing |
+| **url_cleaning_output** | Cleaned URLs and processing results | Processing |
+
+**Core Table**: Primary business data and file storage
+**Processing Tables**: Task-specific data for background processing workflows
+
+For detailed table schemas, constraints, indexes, and relationships, see the **database-schema.md** documentation.
 
 ### Task Status Flow
 - **queueing**: Task created, waiting for processing
@@ -357,6 +383,7 @@ For detailed API endpoint sequence diagrams and request/response flows, refer to
 - Database connection pooling and read replicas
 - File storage optimization with blob compression
 - Background job queues for task processing
+- OpenTelemetry metrics for performance monitoring and auto-scaling triggers
 
 ## Security Considerations
 
@@ -365,7 +392,7 @@ For detailed API endpoint sequence diagrams and request/response flows, refer to
 - **JWT Token Validation**: Cryptographic validation using public keys from SSO server
 - **User Context Extraction**: Secure extraction of user identity and permissions
 - **Access Control**: Task ownership validation for all operations
-- **Request Logging**: Complete audit trail for security compliance
+- **OpenTelemetry Audit Logging**: Complete request audit trail with correlation IDs for security compliance
 
 ### Data Encryption
 - **Data at Rest**: 
@@ -392,8 +419,8 @@ For detailed API endpoint sequence diagrams and request/response flows, refer to
 ### Data Protection
 - **PII Handling**: Secure processing of data within Excel files
 - **Access Control**: Task ownership validation for all operations
-- **Request Logging**: Complete audit trail for security compliance
-- **Network Security**: Internal service communication over encrypted channels
+- **OpenTelemetry Audit Logging**: Complete request audit trail with correlation IDs for security compliance
+- **Network Security**: Internal service communication over encrypted channels with OTEL tracing
 - **Data Retention**: Configurable data retention policies with secure deletion
 - **Compliance**: GDPR, SOX, and industry-standard compliance measures
 
@@ -403,5 +430,5 @@ For detailed API endpoint sequence diagrams and request/response flows, refer to
 3. [ ] Create detailed sequence diagrams for each endpoint
 4. [ ] Write complete OpenAPI specification with file upload
 5. [ ] Define task processing workflows and error handling
-6. [ ] Set up monitoring and logging for the service
+6. [ ] Set up OpenTelemetry instrumentation for distributed tracing and observability
 7. [ ] Design user interface for task management 
