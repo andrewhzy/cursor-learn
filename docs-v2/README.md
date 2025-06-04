@@ -263,7 +263,7 @@ flowchart TD
 | **Excel File Parser** | Multi-sheet parsing, blob creation, data validation | → Task Manager |
 | **Task Manager** | Task CRUD operations, status updates, lifecycle management | → Database |
 | **Query Handler** | Task listing, filtering, search operations | → Database |
-| **Background Task Processor** | FIFO queue management, task type routing | → Task Handlers, OTEL |
+| **Background Task Processor** | FIFO queue management, task type routing, actively polls database for queued tasks | → Task Handlers, Database, OTEL |
 | **Task Type Handlers** | Business logic for each task type (2 types) | → External APIs, Database, OTEL |
 | **In-Memory Processors** | Parse Excel data and process in-memory without intermediate storage | → Task Handlers |
 | **OpenTelemetry (OTEL)** | Distributed tracing, logging, metrics, and observability | ← All Service Components |
@@ -278,7 +278,7 @@ flowchart TD
 3. **Management Flow**: UI → Backend API → Task Manager → Database → Response
 
 #### **Background Operations:**
-4. **Processing Flow**: Database (tasks) → Task Processor → Type Handlers → In-Memory Processing → External APIs → Database (final results)
+4. **Processing Flow**: Task Processor → Database (query tasks) → Type Handlers → In-Memory Processing → External APIs → Database (final results)
 5. **Status Update Flow**: Task Handlers → Database (tasks) → Status Updates
 
 ## Authentication & Authorization
