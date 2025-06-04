@@ -35,8 +35,8 @@ sequenceDiagram
         BG->>LLM: POST /similarity<br/>{"text1": "golden_answer", "text2": "api_answer"}
         LLM-->>BG: {"similarity": 0.85}
         
-        BG->>LLM: POST /similarity<br/>{"citations1": ["url1"], "citations2": ["url2"]}
-        LLM-->>BG: {"similarity": 0.92}
+        BG->>BG: Calculate citation matching rate<br/>{"similarity": 0.92}
+
         
         BG->>DB: INSERT INTO chat_evaluation_output<br/>(task_id, row_number, api_answer, api_citations, answer_similarity, citation_similarity)
         DB-->>BG: Results stored
