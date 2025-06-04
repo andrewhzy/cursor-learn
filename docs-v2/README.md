@@ -109,6 +109,18 @@ graph TB
   - **Direct results storage** in tasks table (no intermediate processing tables)
   - Task history and audit information
 
+## API Endpoints Design
+
+### Endpoint Overview
+
+| Method | Endpoint | Description | Auth Level |
+|--------|----------|-------------|------------|
+| POST   | `/rest/v1/tasks` | Upload Excel file and create tasks | User |
+| GET    | `/rest/v1/tasks` | List user's tasks with filtering (no blob data) | User |
+| GET    | `/rest/v1/tasks/{id}` | Get specific task details with blob files | User |
+| PUT    | `/rest/v1/tasks/{id}` | Update/cancel a task | Owner |
+| DELETE | `/rest/v1/tasks/{id}` | Delete a task | Owner |
+
 ## System Components and Data Flow
 
 ### Task Submission, Query & Management Flow Chart
@@ -290,18 +302,6 @@ flowchart TD
 - **Token Validation**: API validates JWT signature locally using SSO public keys (no SSO server call per request)
 - **User Context**: API extracts user context (user_id, roles, permissions) from validated JWT claims
 - User context is used for task ownership and access control
-
-## API Endpoints Design
-
-### Endpoint Overview
-
-| Method | Endpoint | Description | Auth Level |
-|--------|----------|-------------|------------|
-| POST   | `/rest/v1/tasks` | Upload Excel file and create tasks | User |
-| GET    | `/rest/v1/tasks` | List user's tasks with filtering (no blob data) | User |
-| GET    | `/rest/v1/tasks/{id}` | Get specific task details with blob files | User |
-| PUT    | `/rest/v1/tasks/{id}` | Update/cancel a task | Owner |
-| DELETE | `/rest/v1/tasks/{id}` | Delete a task | Owner |
 
 ## Database Design
 
