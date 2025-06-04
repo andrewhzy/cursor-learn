@@ -1,11 +1,69 @@
-# Database Schema Design - Task Processing Tables
+# Database Schema Design
 
 ## Overview
-This document defines the database schema for task-specific processing tables. Each task type has two tables: one for storing parsed content from Excel files, and another for storing processing results.
 
-## Chat Evaluation Tables
+This document defines the database schema for the Internal Task Management API system. The schema supports task management with Excel file processing, background task execution, and user-scoped data access.
 
-### 1. chat_evaluation_input
+**Database Technology:** MariaDB (MySQL-compatible)
+**Schema Version:** 1.0
+**Character Set:** utf8mb4 (full Unicode support)
+**Collation:** utf8mb4_unicode_ci
+
+## Main Tables
+
+### 1. tasks - Main Task Management Table
+
+Primary table storing task metadata, file blobs, and processing status.
+
+```sql
+CREATE TABLE tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(500) NOT NULL,
+    sheet_name VARCHAR(255) NOT NULL,
+    task_file_blob BYTEA NOT NULL,
+    task_file_size BIGINT NOT NULL,
+    results_file_blob BYTEA,
+    results_file_size BIGINT,
+    file_mime_type VARCHAR(100) DEFAULT 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    task_status VARCHAR(50) NOT NULL DEFAULT 'queueing',
+    task_type VARCHAR(50) NOT NULL DEFAULT 'chat-evaluation',
+    upload_batch_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    cancelled_at TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
+    progress_percentage INTEGER DEFAULT 0,
+    metadata JSONB,
+    created_by VARCHAR(255) NOT NULL,
+    
+    CONSTRAINT valid_status CHECK (task_status IN ('queueing', 'processing', 'completed', 'cancelled', 'failed')),
+    CONSTRAINT valid_progress CHECK (progress_percentage >= 0 AND progress_percentage <= 100),
+    CONSTRAINT valid_task_type CHECK (task_type IN ('chat-evaluation', 'url-cleaning'))
+);
+
+-- Indexes for performance optimization  
+CREATE INDEX idx_tasks_user_id ON tasks(user_id);
+CREATE INDEX idx_tasks_status ON tasks(task_status);
+CREATE INDEX idx_tasks_type_status ON tasks(task_type, task_status);
+CREATE INDEX idx_tasks_upload_batch ON tasks(upload_batch_id);
+CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);
+CREATE INDEX idx_tasks_user_status ON tasks(user_id, task_status);
+CREATE INDEX idx_tasks_background_processing ON tasks(task_type, task_status, created_at) WHERE task_status = 'queueing';
+```
+
+#### Task Status Flow
+- **queueing**: Task created, waiting for processing
+- **processing**: Task is being executed
+- **completed**: Task finished successfully
+- **cancelled**: Task cancelled by user
+- **failed**: Task failed with error
+
+## Processing Tables
+
+### 2. chat_evaluation_input
 Stores parsed content from Excel files for chat evaluation tasks.
 
 ```sql
@@ -29,7 +87,7 @@ CREATE INDEX idx_chat_eval_input_task_id ON chat_evaluation_input(task_id);
 CREATE INDEX idx_chat_eval_input_row_number ON chat_evaluation_input(task_id, row_number);
 ```
 
-### 2. chat_evaluation_output
+### 3. chat_evaluation_output
 Stores processing results and similarity scores for each evaluated question.
 
 ```sql
@@ -61,7 +119,7 @@ CREATE INDEX idx_chat_eval_output_similarity ON chat_evaluation_output(answer_si
 
 ## URL Cleaning Tables
 
-### 3. url_cleaning_input
+### 4. url_cleaning_input
 Stores original URLs to be cleaned from Excel files.
 
 ```sql
@@ -86,7 +144,7 @@ CREATE INDEX idx_url_cleaning_input_row_number ON url_cleaning_input(task_id, ro
 CREATE INDEX idx_url_cleaning_input_url ON url_cleaning_input USING hash(url);
 ```
 
-### 4. url_cleaning_output
+### 5. url_cleaning_output
 Stores cleaning results, success/failure status, and processing methods.
 
 ```sql
